@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Latchdesign Studio - Start a Project</title>
+  <!-- Tailwind CSS for modern layout -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- GSAP for smooth elastic animations -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  
+  <style>
+    /* Custom modern dark theme styles */
+    body {
+      background-color: #0B0B0F;
+      color: #F3F4F6;
+      font-family: system-ui, -apple-system, sans-serif;
+      overflow: hidden;
+    }
+    
+    /* Pulsing background glow representing Gavino's mood */
+    .glow-bg {
+      filter: blur(120px);
+      transition: background 0.8s ease, transform 0.8s ease;
+    }
+
+    /* Morphing blob background for Gavino */
+    .gavino-blob {
+      border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+      animation: morph 8s ease-in-out infinite alternate;
+      transition: background 0.5s ease, transform 0.3s ease;
+    }
+
+    @keyframes morph {
+      0% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
+      50% { border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%; }
+      100% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
+    }
+  </style>
+</head>
+<body class="h-screen w-screen flex flex-col items-center justify-center relative select-none">
+
+  <!-- Dynamic ambient light -->
+  <div id="ambient-light" class="glow-bg absolute w-[300px] h-[300px] rounded-full bg-blue-500/10 -z-10 pointer-events-none"></div>
+
+  <!-- STAGE 1: SLIDE TO START -->
+  <div id="slide-stage" class="flex flex-col items-center justify-center z-10 w-full max-w-md px-6">
+    <div class="text-center mb-12">
+      <h1 class="text-3xl font-light tracking-wide text-white/90 mb-2">LATCHDESIGN</h1>
+      <p class="text-sm text-white/40 uppercase tracking-widest">Interactive Studio Portal</p>
+    </div>
+
+    <!-- The Slider Track -->
+    <div id="slider-track" class="w-full h-16 bg-white/[0.03] border border-white/10 rounded-full relative flex items-center p-1 backdrop-blur-md overflow-hidden shadow-inner cursor-grab active:cursor-grabbing">
+      <div id="slider-text" class="absolute w-full text-center text-sm font-medium tracking-wide text-white/40 pointer-events-none transition-opacity duration-300">
+        Slide to start a project →
+      </div>
+      <!-- Drag Handle -->
+      <div id="slider-handle" class="w-14 h-14 rounded-full bg-white flex items-center justify-center shadow-lg transform transition-transform duration-100 ease-out z-10">
+        <svg class="w-5 h-5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- STAGE 2: THE INTERACTIVE CHAT PORTAL -->
+  <div id="chat-stage" class="hidden flex-col items-center justify-between z-10 w-full max-w-lg h-[80vh] px-6 py-8">
+    
+    <!-- Character Display (Gavino) -->
+    <div class="flex flex-col items-center justify-center space-y-4">
+      <div class="relative w-36 h-36 flex items-center justify-center">
+        <!-- Floating Morphing Blob -->
+        <div id="gavino-body" class="gavino-blob absolute inset-0 bg-gradient-to-tr from-blue-600 to-indigo-500 shadow-[0_0_35px_rgba(99,102,241,0.3)]"></div>
+        
+        <!-- Live Expressive Face Overlay -->
+        <svg id="gavino-face" class="w-16 h-16 z-10 drop-shadow-md text-white transition-all duration-300" fill="none" viewBox="0 0 100 100" stroke="currentColor" stroke-width="8">
+          <!-- Eyes -->
+          <g id="eyes" class="transition-all duration-300">
+            <!-- Left Eye -->
+            <path id="left-eye" d="M 30,45 L 30,55" stroke-linecap="round"/>
+            <!-- Right Eye -->
+            <path id="right-eye" d="M 70,45 L 70,55" stroke-linecap="round"/>
+          </g>
+          <!-- Mouth -->
+          <path id="mouth" d="M 40,75 Q 50,75 60,75" stroke-linecap="round" />
+        </svg>
+      </div>
+      <div class="text-center">
+        <span class="text-xs tracking-wider uppercase text-white/30 bg-white/5 border border-white/10 px-3 py-1 rounded-full">Gavino • Assistant</span>
+      </div>
+    </div>
+
+    <!-- Interactive Dialogue Pane -->
+    <div class="w-full flex-grow flex flex-col justify-center items-center text-center max-w-md my-4">
+      <p id="chat-text" class="text-xl md:text-2xl font-light leading-relaxed text-white min-h-[5rem] transition-all duration-300"></p>
+    </div>
+
+    <!-- Dynamic Input Container -->
+    <div id="input-container" class="w-full max-w-md flex flex-col items-center gap-4 transition-all duration-300">
+      <!-- Content loaded dynamically based on steps -->
+    </div>
+
+  </div>
+
+  <script>
+    // State Variables
+    let step = 0;
+    let userName = "";
+    let projectType = "";
+    let budget = 25; // in thousands
+
+    // DOM Elements
+    const ambientLight = document.getElementById('ambient-light');
+    const slideStage = document.getElementById('slide-stage');
+    const chatStage = document.getElementById('chat-stage');
+    const sliderTrack = document.getElementById('slider-track');
+    const sliderHandle = document.getElementById('slider-handle');
+    const sliderText = document.getElementById('slider-text');
+    const chatText = document.getElementById('chat-text');
+    const inputContainer = document.getElementById('input-container');
+    const gavinoBody = document.getElementById('gavino-body');
+    const leftEye = document.getElementById('left-eye');
+    const rightEye = document.getElementById('right-eye');
+    const mouth = document.getElementById('mouth');
+
+    // Drag-to-Slide Logic
+    let isDragging = false;
+    let startX = 0;
+    const maxDrag = sliderTrack.clientWidth - sliderHandle.clientWidth - 10;
+
+    function handleStart(e) {
+      isDragging = true;
+      startX = (e.type === 'touchstart') ? e.touches[0].clientX : e.clientX;
+      sliderHandle.style.transition = 'none';
+    }
+
+    function handleMove(e) {
+      if (!isDragging) return;
+      const currentX = (e.type === 'touchmove') ? e.touches[0].clientX : e.clientX;
+      let deltaX = currentX - startX;
+      if (deltaX < 0) deltaX = 0;
+      if (deltaX > maxDrag) deltaX = maxDrag;
+
+      // Elastic pull back if they drag too fast, or strict tracking
+      sliderHandle.style.transform = `translateX(${deltaX}px)`;
+      sliderText.style.opacity = 1 - (deltaX / maxDrag);
+
+      // Check threshold (unlock)
+      if (deltaX >= maxDrag - 5) {
+        isDragging = false;
+        unlockPortal();
+      }
+    }
+
+    function handleEnd() {
+      if (!isDragging) return;
+      isDragging = false;
+      // Bounce handle back to start with GSAP
+      gsap.to(sliderHandle, { x: 0, duration: 0.5, ease: "elastic.out(1, 0.4)" });
+      gsap.to(sliderText, { opacity: 1, duration: 0.3 });
+    }
+
+    // Assigning event listeners for desktop and mobile slide mechanics
+    sliderTrack.addEventListener('mousedown', handleStart);
+    window.addEventListener('mousemove', handleMove);
+    window.addEventListener('mouseup', handleEnd);
+
+    sliderTrack.addEventListener('touchstart', handleStart);
+    window.addEventListener('touchmove', handleMove);
+    window.addEventListener('touchend', handleEnd);
+
+    // UNLOCK TRANSITION
+    function unlockPortal() {
+      // Smooth fade out of slide screen
+      gsap.to(slideStage, {
+        opacity: 0, scale: 0.9, duration: 0.6, ease: "power2.out", onComplete: () => {
+          slideStage.classList.add('hidden');
+          chatStage.classList.remove('hidden');
+          gsap.fromTo(chatStage, { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.8, ease: "power3.out" });
+          wakeUpGavino();
+        }
+      });
+    }
+
+    // GAVINO CHARACTER STATE MACHINE
+    function changeGavinoState(state) {
+      switch (state) {
+        case 'sleeping':
+          leftEye.setAttribute('d', 'M 30,50 L 40,50');
+          rightEye.setAttribute('d', 'M 60,50 L 70,50');
+          mouth.setAttribute('d', 'M 45,65 Q 50,65 55,65');
+          break;
+        case 'speaking':
+          // Speech loops triggered programmatically
+          leftEye.setAttribute('d', 'M 30,45 L 30,55');
+          rightEye.setAttribute('d', 'M 70,45 L 70,55');
+          break;
+        case 'listening':
+          leftEye.setAttribute('d', 'M 30,40 L 30,60');
+          rightEye.setAttribute('d', 'M 70,40 L 70,60');
+          mouth.setAttribute('d', 'M 40,70 Q 50,70 60,70');
+          gsap.to(gavinoBody, { scale: 1, duration: 0.5, ease: "power1.out" });
+          break;
+        case 'excited':
+          // Arched, happy curved eyes, smiling mouth
+          leftEye.setAttribute('d', 'M 25,50 Q 32,40 40,50');
+          rightEye.setAttribute('d', 'M 60,50 Q 68,40 75,50');
+          mouth.setAttribute('d', 'M 35,65 Q 50,85 65,65');
+          gsap.to(gavinoBody, { scale: 1.15, duration: 0.5, ease: "elastic.out(1.2, 0.4)" });
+          break;
+      }
+    }
+
+    // Simulated speech wave mouth movements
+    let speechInterval;
+    function startSpeechVibe() {
+      changeGavinoState('speaking');
+      let count = 0;
+      speechInterval = setInterval(() => {
+        const mouthHeight = 65 + (Math.sin(count) * 12);
+        mouth.setAttribute('d', `M 38,65 Q 50,${mouthHeight} 62,65`);
+        count += 1.5;
+      }, 100);
+    }
+
+    function stopSpeechVibe() {
+      clearInterval(speechInterval);
+      changeGavinoState('listening');
+    }
+
+    // Elegant Typewriter function
+    function typeText(targetText, speed = 35, callback) {
+      startSpeechVibe();
+      chatText.innerHTML = "";
+      let i = 0;
+      function type() {
+        if (i < targetText.length) {
+          chatText.innerHTML += targetText.charAt(i);
+          i++;
+          setTimeout(type, speed);
+        } else {
+          stopSpeechVibe();
+          if (callback) callback();
+        }
+      }
+      type();
+    }
+
+    // GAME LOOP FLOW
+    function wakeUpGavino() {
+      changeGavinoState('sleeping');
+      // Grab local time dynamically for personalized contextual greetings
+      const hours = new Date().getHours();
+      let greeting = "Hello";
+      if (hours < 12) greeting = "Good morning";
+      else if (hours < 18) greeting = "Good afternoon";
+      else greeting = "Good evening";
+
+      setTimeout(() => {
+        typeText(`${greeting}! I'm Gavino, Latchdesign's interactive assistant. May I get your name to start?`, 35, renderNameInput);
+      }, 800);
+    }
+
+    // Step 1 Input Rendering
+    function renderNameInput() {
+      inputContainer.innerHTML = `
+        <div class="flex items-center w-full gap-2 border-b border-white/20 pb-2 focus-within:border-white transition-colors duration-300">
+          <input type="text" id="name-field" placeholder="Type your name here..." class="bg-transparent border-none text-white focus:outline-none w-full text-lg font-light tracking-wide text-center" autocomplete="off"/>
+        </div>
+        <button id="next-btn" class="px-6 py-2.5 bg-white text-black font-medium tracking-wide rounded-full opacity-50 pointer-events-none hover:scale-105 transition-all">
+          Continue
+        </button>
+      `;
+
+      const input = document.getElementById('name-field');
+      const btn = document.getElementById('next-btn');
+
+      input.focus();
+
+      // Enable/Disable interactive states on click/type
+      input.addEventListener('input', (e) => {
+        if (e.target.value.trim().length > 1) {
+          btn.classList.remove('opacity-50', 'pointer-events-none');
+        } else {
+          btn.classList.add('opacity-50', 'pointer-events-none');
+        }
+      });
+
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && input.value.trim().length > 1) {
+          submitName(input.value.trim());
+        }
+      });
+
+      btn.addEventListener('click', () => {
+        submitName(input.value.trim());
+      });
+    }
+
+    function submitName(name) {
+      userName = name;
+      changeGavinoState('excited');
+      gsap.to(inputContainer, { opacity: 0, y: 10, duration: 0.3, onComplete: () => {
+        inputContainer.innerHTML = "";
+        gsap.to(inputContainer, { opacity: 1, y: 0 });
+        typeText(`Splendid to meet you, ${userName}! Tell me, what type of project are we looking to create?`, 35, renderProjectTypeChoices);
+      }});
+    }
+
+    // Step 2 Input Rendering (Tactile Cards)
+    function renderProjectTypeChoices() {
+      inputContainer.innerHTML = `
+        <div class="grid grid-cols-2 gap-3 w-full">
+          <button class="choice-card p-5 border border-white/10 rounded-2xl bg-white/[0.02] hover:bg-white/[0.08] hover:border-white/30 text-left transition-all active:scale-95 flex flex-col justify-between" data-choice="identity">
+            <span class="text-xs uppercase text-white/40 tracking-widest font-semibold">Branding</span>
+            <span class="text-sm mt-3 font-light text-white/80">Brand Identity & Assets</span>
+          </button>
+          <button class="choice-card p-5 border border-white/10 rounded-2xl bg-white/[0.02] hover:bg-white/[0.08] hover:border-white/30 text-left transition-all active:scale-95 flex flex-col justify-between" data-choice="web">
+            <span class="text-xs uppercase text-white/40 tracking-widest font-semibold">Digital</span>
+            <span class="text-sm mt-3 font-light text-white/80">Website & Product Design</span>
+          </button>
+          <button class="choice-card p-5 border border-white/10 rounded-2xl bg-white/[0.02] hover:bg-white/[0.08] hover:border-white/30 text-left transition-all active:scale-95 flex flex-col justify-between" data-choice="pricing">
+            <span class="text-xs uppercase text-white/40 tracking-widest font-semibold">Rates</span>
+            <span class="text-sm mt-3 font-light text-white/80">Get Pricing Sheets</span>
+          </button>
+          <button class="choice-card p-5 border border-white/10 rounded-2xl bg-white/[0.02] hover:bg-white/[0.08] hover:border-white/30 text-left transition-all active:scale-95 flex flex-col justify-between" data-choice="chat">
+            <span class="text-xs uppercase text-white/40 tracking-widest font-semibold">Inquiry</span>
+            <span class="text-sm mt-3 font-light text-white/80">Just Saying Hello</span>
+          </button>
+        </div>
+      `;
+
+      document.querySelectorAll('.choice-card').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const choice = btn.getAttribute('data-choice');
+          const choiceText = btn.querySelector('.text-sm').innerText;
+          selectProjectType(choice, choiceText);
+        });
+      });
+    }
+
+    function selectProjectType(choice, name) {
+      projectType = choice;
+      changeGavinoState('excited');
+      
+      gsap.to(inputContainer, { opacity: 0, y: 10, duration: 0.3, onComplete: () => {
+        inputContainer.innerHTML = "";
+        gsap.to(inputContainer, { opacity: 1, y: 0 });
+
+        if (choice === 'chat') {
+          typeText(`Awesome. A simple friendly hello works wonders. Leave your email so we can write back?`, 35, renderFinalContact);
+        } else if (choice === 'pricing') {
+          typeText(`Got it. Let's see what budget we're exploring so I can match you with the right pricing models.`, 35, renderBudgetSlider);
+        } else {
+          typeText(`Perfect! Let's build some ${name}. What's the approximate budget scale you're targeting?`, 35, renderBudgetSlider);
+        }
+      }});
+    }
+
+    // Step 3 Input Rendering (Dynamic Budget Mood Slider)
+    function renderBudgetSlider() {
+      inputContainer.innerHTML = `
+        <div class="w-full px-4 flex flex-col gap-4">
+          <div class="flex justify-between items-center text-sm font-semibold tracking-wide">
+            <span class="text-white/40">Budget Target:</span>
+            <span id="budget-val" class="text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 px-3 py-1 rounded-full text-base font-light transition-all">$25,000</span>
+          </div>
+          <input type="range" id="budget-range" min="5" max="150" value="25" class="w-full accent-indigo-500 cursor-ew-resize bg-white/10 h-1.5 rounded-lg appearance-none"/>
+          <button id="submit-budget-btn" class="w-full mt-2 py-3 bg-white text-black font-medium tracking-wide rounded-full hover:scale-105 transition-all">
+            Confirm Budget & Scale
+          </button>
+        </div>
+      `;
+
+      const slider = document.getElementById('budget-range');
+      const valText = document.getElementById('budget-val');
+      const submitBtn = document.getElementById('submit-budget-btn');
+
+      slider.addEventListener('input', (e) => {
+        const val = parseInt(e.target.value);
+        budget = val;
+        valText.innerText = `$${val.toLocaleString()},000`;
+
+        // Interactive visual feedback: update Gavino's mood and ambient lighting dynamically based on value
+        if (val < 20) {
+          // Lean and agile
+          gavinoBody.style.background = 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)';
+          ambientLight.style.background = 'rgba(59, 130, 246, 0.08)';
+          gsap.to(gavinoBody, { scale: 0.9, duration: 0.3 });
+        } else if (val < 75) {
+          // Standard / Growing
+          gavinoBody.style.background = 'linear-gradient(135deg, #6366f1 0%, #4338ca 100%)';
+          ambientLight.style.background = 'rgba(99, 102, 241, 0.1)';
+          gsap.to(gavinoBody, { scale: 1.0, duration: 0.3 });
+        } else {
+          // Epic scale (Gold & Purple hues)
+          gavinoBody.style.background = 'linear-gradient(135deg, #ec4899 0%, #e11d48 100%)';
+          ambientLight.style.background = 'rgba(236, 72, 153, 0.15)';
+          gsap.to(gavinoBody, { scale: 1.25, duration: 0.3, ease: "back.out" });
+        }
+      });
+
+      submitBtn.addEventListener('click', () => {
+        gsap.to(inputContainer, { opacity: 0, y: 10, duration: 0.3, onComplete: () => {
+          inputContainer.innerHTML = "";
+          gsap.to(inputContainer, { opacity: 1, y: 0 });
+          typeText(`Brilliant. I have marked this down. Lastly, what email address should we send details to?`, 35, renderFinalContact);
+        }});
+      });
+    }
+
+    // Step 4 Input Rendering (Final Email/Contact Details)
+    function renderFinalContact() {
+      inputContainer.innerHTML = `
+        <div class="flex items-center w-full gap-2 border-b border-white/20 pb-2 focus-within:border-white transition-colors duration-300">
+          <input type="email" id="email-field" placeholder="your@email.com" class="bg-transparent border-none text-white focus:outline-none w-full text-lg font-light tracking-wide text-center" autocomplete="off"/>
+        </div>
+        <button id="final-submit" class="px-8 py-3 bg-white text-black font-semibold tracking-wide rounded-full opacity-50 pointer-events-none hover:scale-105 transition-all">
+          Launch Project Request
+        </button>
+      `;
+
+      const input = document.getElementById('email-field');
+      const btn = document.getElementById('final-submit');
+
+      input.focus();
+
+      input.addEventListener('input', (e) => {
+        const value = e.target.value.trim();
+        const isValid = value.includes('@') && value.includes('.');
+        if (isValid) {
+          btn.classList.remove('opacity-50', 'pointer-events-none');
+        } else {
+          btn.classList.add('opacity-50', 'pointer-events-none');
+        }
+      });
+
+      input.addEventListener('keydown', (e) => {
+        const isValid = input.value.trim().includes('@') && input.value.trim().includes('.');
+        if (e.key === 'Enter' && isValid) {
+          triggerFinalFinish();
+        }
+      });
+
+      btn.addEventListener('click', triggerFinalFinish);
+    }
+
+    function triggerFinalFinish() {
+      changeGavinoState('excited');
+      gsap.to(inputContainer, { opacity: 0, y: 10, duration: 0.3, onComplete: () => {
+        inputContainer.innerHTML = "";
+        typeText(`Thank you, ${userName}! Your project profile is prepared and on its way to the creative directors. We'll speak very soon!`, 35, () => {
+          // Confetti or visual finish state can trigger here
+          changeGavinoState('listening');
+        });
+      }});
+    }
+
+  </script>
+</body>
+</html>
